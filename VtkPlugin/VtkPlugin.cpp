@@ -7,6 +7,7 @@
 #include <boost/filesystem.hpp>
 #include <OrthancCPlugin.h>
 #include <fstream>
+#include "dicomtoitk-1.0/dicomToItk.h"
 
 using namespace boost::filesystem;
 
@@ -219,6 +220,8 @@ void GetVtk(OrthancPluginRestOutput *output, const char *url, const OrthancPlugi
     }
 
     std::string uri;
+    char* tpm_name = std::tmpnam(nullptr);
+    path ph ( tpm_name );
     if (LocateSeries(output, uri, request))
     {
         //AnswerListOfDicomInstances(output, uri);
@@ -236,7 +239,6 @@ void GetVtk(OrthancPluginRestOutput *output, const char *url, const OrthancPlugi
             return;
         }
 
-        path ph ( std::tmpnam(nullptr) );
         if (!exists(ph)) {
             create_directories(ph);
             LogInfo("Temp directory '" + ph.string() + "' created");
@@ -250,12 +252,10 @@ void GetVtk(OrthancPluginRestOutput *output, const char *url, const OrthancPlugi
             std::string outName (ph.string() + "/" + instances[i].asString() + ".dicom");
             std::ofstream outFile(outName, std::ofstream::binary);
             outFile.write(reinterpret_cast<const char *>(response.data), response.size);
-            LogInfo(outName + " writed");
+            LogInfo(outName + " wrote");
             outFile.close();
             OrthancPluginFreeMemoryBuffer(context_, &response);
         }
-
-        return;
     }
     else
     {
@@ -265,56 +265,53 @@ void GetVtk(OrthancPluginRestOutput *output, const char *url, const OrthancPlugi
     }
 
 
-//    std::string application;
-//    std::string accept;
-//    std::map<std::string, std::string> attributes;
-//    ParseContentType(application, attributes, accept);
-//
-//    // Dispatch according to the requested content type
-//    std::string returnContentType = "application/octet-stream";   // By default, JPEG image will be returned
-//
-//    if (!accept.empty())
-//    {
-//        returnContentType = accept;
-//    }
-//
-//    if (returnContentType == "application/octet-stream")
-//    {
-//        //ifstream file ("test.vtk", std::ios::binary);
-//        FILE * pFile;
-//        long size;
-//        char * buffer;
-//        size_t result;
-//
-//        if ((pFile = fopen("test.vtk", "rb")) != nullptr)
-//        {
-//            fseek (pFile, 0, SEEK_END);   // non-portable
-//            size = ftell (pFile);
-//            printf ("Size of myfile.txt: %ld bytes.\n",size);
-//            rewind (pFile);
-//            buffer = (char*) malloc (sizeof(char)*size);
-//
-//            if (buffer == nullptr) { fputs ("Memory error",stderr); exit (2); }
-//
-//            result = fread (buffer, 1, static_cast<size_t>(size), pFile);
-//
-//            if (result != size) {fputs ("Reading error",stderr); exit (3);}
-//
-//            OrthancPluginAnswerBuffer(context_, output, buffer, static_cast<uint32_t>(size), returnContentType.c_str());
-//            fclose (pFile);
-//            free (buffer);
-//
-//        }
-//        else
-//        {
-//
-//            LogError("File not found: ");
-//            throw OrthancPlugins::PluginException(OrthancPluginErrorCode_UnknownResource);
-//        }
-//    }
-//    else
-//    {
-//        LogError("Unsupported VTK content type: " + returnContentType);
-//        throw OrthancPlugins::PluginException(OrthancPluginErrorCode_BadRequest);
-//    }
+    if (returnContentType == "application/octet-stream")
+    {
+        //ifstream file ("test.vtk", std::ios::binary);
+        FILE * pFile;
+        long size;
+        char * buffer;
+        size_t result;
+        
+        std::string outFile = std::string("/out.vtk");
+
+        VtkGenerator generator =  VtkGenerator(ph.c_str(), outFile.c_str());
+        LogInfo("VTK Generator constructor called with '" + ph.string() + "' path and '" + outFile + "'");
+        generator.generate();
+        LogInfo("VTK Generator invoked");
+
+        const std::string outputFile =
+                ph.string().c_str() + std::string("/") + outFile;
+
+        if ((pFile = fopen(outputFile.c_str(), "rb")) != nullptr)
+        {
+            fseek (pFile, 0, SEEK_END);   // non-portable
+            size = ftell (pFile);
+            printf ("Size of %s: %ld bytes.\n", outFile.c_str(), size);
+            rewind (pFile);
+            buffer = (char*) malloc (sizeof(char)*size);
+
+            if (buffer == nullptr) { fputs ("Memory error",stderr); exit (2); }
+
+            result = fread (buffer, 1, static_cast<size_t>(size), pFile);
+
+            if (result != size) {fputs ("Reading error",stderr); exit (3);}
+
+            OrthancPluginAnswerBuffer(context_, output, buffer, static_cast<uint32_t>(size), returnContentType.c_str());
+            fclose (pFile);
+            free (buffer);
+
+        }
+        else
+        {
+
+            LogError("File not found: ");
+            throw OrthancPlugins::PluginException(OrthancPluginErrorCode_UnknownResource);
+        }
+    }
+    else
+    {
+        LogError("Unsupported VTK content type: " + returnContentType);
+        throw OrthancPlugins::PluginException(OrthancPluginErrorCode_BadRequest);
+    }
 }

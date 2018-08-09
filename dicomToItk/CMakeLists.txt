@@ -12,6 +12,8 @@ include(${ITK_USE_FILE})
 
 add_library(dicomtoitk SHARED ${ITK_SOURCES} dicomToItk.cpp dicomToItk.h)
 
+target_link_libraries(dicomtoitk ${ITK_LIBRARIES})
+
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/dicomToItk/dicomtoitkConfigVersion.cmake"
@@ -19,7 +21,7 @@ write_basic_package_version_file(
         COMPATIBILITY AnyNewerVersion)
 
 install(TARGETS dicomtoitk EXPORT dicomToItkTargets DESTINATION lib)
-install(FILES dicomToItk.h DESTINATION include/${PROJECT_NAME}-${dicomtoitk_VERSION_MAJOR}.${dicomtoitk_VERSION_MINOR})
+install(FILES dicomToItk.h DESTINATION include/${PROJECT_NAME}-${dicomtoitk_VERSION})
 
 export(EXPORT dicomToItkTargets
         FILE "${CMAKE_CURRENT_BINARY_DIR}/dicomToItk/dicomtoitkTargets.cmake"

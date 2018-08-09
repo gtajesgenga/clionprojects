@@ -10,11 +10,11 @@
 #include "itkMesh.h"
 
 
-VtkGenerator::VtkGenerator(std::string directory, std::string outputfile)  : directory(std::move(directory)), outputFile(std::move(outputfile)) {}
+VtkGenerator::VtkGenerator(const char* directory, const char* outputfile)  : directory(std::move(directory)), outputFile(std::move(outputfile)) {}
 
 VtkGenerator::~VtkGenerator() {
-    directory.clear();
-    outputFile.clear();
+    directory = nullptr;
+    outputFile = nullptr;
 }
 
 bool VtkGenerator::generate() {
@@ -37,12 +37,36 @@ bool VtkGenerator::generate() {
 
     using SeriesIdContainer = std::vector< std::string >;
     const SeriesIdContainer & seriesUID = nameGenerator->GetSeriesUIDs();
+    auto seriesItr = seriesUID.begin();
+    auto seriesEnd = seriesUID.end();
+    std::cout << std::endl << "The directory: " << std::endl;
+    std::cout << std::endl << directory << std::endl << std::endl;
+    std::cout << "Contains the following DICOM Series: ";
+    std::cout << std::endl << std::endl;
+    while( seriesItr != seriesEnd )
+    {
+        std::cout << seriesItr->c_str() << std::endl;
+        ++seriesItr;
+    }
 
     std::string seriesIdentifier = seriesUID.begin()->c_str();
+
+    std::cout << std::endl << std::endl;
+    std::cout << "Now reading series: " << std::endl << std::endl;
+    std::cout << seriesIdentifier << std::endl;
+    std::cout << std::endl << std::endl;
 
     using FileNamesContainer = std::vector< std::string >;
     FileNamesContainer fileNames;
     fileNames = nameGenerator->GetFileNames( seriesIdentifier );
+
+    std::cout << std::endl << std::endl;
+    std::cout << "List of filenames: " << std::endl << std::endl;
+
+    for (std::string file : fileNames) {
+        std::cout << file << std::endl;
+        std::cout << std::endl;
+    }
 
     reader->SetFileNames( fileNames );
 
@@ -62,7 +86,14 @@ bool VtkGenerator::generate() {
     filter->SetObjectValue( 255 );
 
     WriterType::Pointer writer = WriterType::New();
-    writer->SetFileName( directory + outputFile );
+    char * res = new char();
+    strcpy(res, directory);
+    strcat(res, outputFile);
+
+    std::cout << "Using output filename:" << std::endl;
+    std::cout << res << std::endl;
+
+    writer->SetFileName( res );
     writer->SetInput( filter->GetOutput() );
 
     try {

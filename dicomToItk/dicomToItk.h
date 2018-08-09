@@ -7,11 +7,11 @@ using byte = unsigned char;
 
 class VtkGenerator {
 private:
-    std::string directory;
-    std::string outputFile;
+    const char* directory;
+    const char* outputFile;
 
 public:
-    VtkGenerator(std::string directory, std::string outputfile);
+    VtkGenerator(const char* directory, const char* outputfile);
 
     virtual ~VtkGenerator();
 

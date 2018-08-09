@@ -17,9 +17,9 @@ include_directories(${CMAKE_SOURCE_DIR}/Resources)
 # Find ITK.
 #find_package(ITK REQUIRED)
 #include(${ITK_USE_FILE})
-find_package(dicomtoitk)
 
 set(CORE_SOURCES ${BOOST_SOURCES} ${JSONCPP_SOURCES} ${ITK_SOURCES})
 
 add_library(VtkPlugin SHARED ${CORE_SOURCES} VtkPlugin.cpp)
 
+target_link_libraries(VtkPlugin dicomtoitk)
