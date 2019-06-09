@@ -2,8 +2,8 @@
 #define VTKPLUGIN_LIBRARY_H
 
 #include "OrthancCPlugin.h"
-#include <jsoncpp/json/value.h>
-#include <jsoncpp/json/reader.h>
+#include "cmake-build-debug/jsoncpp-0.10.5/include/json/value.h"
+#include "cmake-build-debug/jsoncpp-0.10.5/include/json/reader.h"
 #include <boost/noncopyable.hpp>
 #include <string>
 
